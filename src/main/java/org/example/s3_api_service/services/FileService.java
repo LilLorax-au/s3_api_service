@@ -5,7 +5,8 @@ import org.example.s3_api_service.records.File;
 
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicLong;
-import java.io.IOException;
+import java.io.FileWriter;
+
 
 public class FileService {
 
@@ -13,19 +14,30 @@ public class FileService {
 
     @Nullable
     public static File download(){
-        return null;
+        File file = null;
+        try{
+            file = testFileBuilder(".txt");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return file;
     }
 
     @Nullable
-    private static File testFileBuilder(String ext){
+    private static File testFileBuilder(String ext) throws IOException{
         String file_name = "test_file_" + fileCounter.toString();
 
         java.io.File testFile = new java.io.File(file_name + ext);
 
-        if (testFile.exists()){}
+        if (!testFile.exists()) {
+            try {
+                testWriteFile(file_name + ext);
+            }catch (IOException e){
+                throw new IOException(e);
+            }
+        }
 
-
-        try{
+        try {
             return new File(
                     file_name,
                     ext,
@@ -37,8 +49,14 @@ public class FileService {
 
     }
 
-    private java.io.File testWriteFile(java.io.File){
-
+    private static void testWriteFile(String file_name) throws IOException{
+        try (FileWriter newFile = new FileWriter(file_name)){
+            for (int i = 0; i < 1000; i++){
+                newFile.write("0");
+            }
+        }catch (IOException e){
+            throw new IOException(e);
+        }
     }
 
 
