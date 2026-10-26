@@ -16,7 +16,7 @@ public class FileService {
     public static File download(){
         File file = null;
         try{
-            file = testFileBuilder(".txt");
+            file = testFileBuilder(".pdf");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
