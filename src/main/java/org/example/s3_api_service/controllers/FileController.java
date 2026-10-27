@@ -3,6 +3,7 @@ package org.example.s3_api_service.controllers;
 import org.apache.tomcat.util.file.ConfigurationSource;
 import org.example.s3_api_service.services.FileService;
 import org.example.s3_api_service.records.File;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -15,6 +16,13 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class FileController {
+
+    private final FileService fileService;
+
+    public FileController(FileService fileService){
+        this.fileService = fileService;
+    }
+
 
     /**
      * End point for downloading files
@@ -29,7 +37,7 @@ public class FileController {
 //      TODO build auth service that's key based, assure btyeArray method is best opt here
 //      TODO expand for larger files, create more dynamic approach
         try{
-            File file = FileService.download();
+            File file = this.fileService.download();
             Resource resource = new ByteArrayResource(file.content());
             String contentType = "application/octet-stream";
 
