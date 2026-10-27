@@ -1,26 +1,41 @@
 package org.example.s3_api_service.services;
 
-import jakarta.annotation.Nullable;
-import org.example.s3_api_service.clients.S3Client;
 import org.example.s3_api_service.records.File;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
 import java.util.concurrent.atomic.AtomicLong;
-import java.io.FileWriter;
+
+import software.amazon.awssdk.core.ResponseBytes;
+import software.amazon.awssdk.core.sync.ResponseTransformer;
+import software.amazon.awssdk.services.s3.S3Client;
 
 @Service
 public class FileService {
-    private S3Client s3Client;
+    @Value("${s3.name}")
+    private String bucketName;
 
+    private final S3Client s3Client;
+    private final AuthService authenticator;
     private final AtomicLong fileCounter = new AtomicLong(0);
 
+    public FileService(S3Client s3Client, AuthService authenticator){
+        this.s3Client = s3Client;
+        this.authenticator = authenticator;
+    }
 
-    public File download(){
-        File file = new File("test" + fileCounter.getAndIncrement(), ".txt", new byte[1024]);
+    public File download(String apiKey, String bucketKey){
+//        TODO need to find a good way of streaming the sdk bytes into something that can be sent to the client, unsure if i could use this or not
+        File file = null;
+
+        if(this.authenticator.isKeyValid(apiKey)){
+            var data = s3Client.getObject(request ->
+                    request
+                            .bucket(bucketName)
+                            .key(bucketKey),
+                    ResponseTransformer.toBytes());
+
+        }
 
         return file;
     }
