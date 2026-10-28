@@ -1,13 +1,11 @@
 package org.example.s3_api_service.services;
 
-import org.example.s3_api_service.records.File;
+import org.example.s3_api_service.models.File;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-import software.amazon.awssdk.core.ResponseBytes;
-import software.amazon.awssdk.core.sync.ResponseTransformer;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 

@@ -1,4 +1,4 @@
-package org.example.s3_api_service.records;
+package org.example.s3_api_service.models;
 
 /**
  * File is a representation of an actual file, including its contents as a byte array

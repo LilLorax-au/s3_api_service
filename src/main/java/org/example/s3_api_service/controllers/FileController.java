@@ -1,13 +1,10 @@
 package org.example.s3_api_service.controllers;
 
-import org.apache.tomcat.util.file.ConfigurationSource;
 import org.example.s3_api_service.services.FileService;
-import org.example.s3_api_service.records.File;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.example.s3_api_service.models.File;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,24 +23,26 @@ public class FileController {
 
     /**
      * End point for downloading files
-     * @param fileName to spec what file to download
+     * @param bucketKey to spec what file to download(using s3 syntax)
+     * @param apiKey auth key
      * TODO param key, for secure api auth
      * @return A resource to download, will end up supporting any files, but limited to byte array size of about 2gb
      */
-    @GetMapping("/file/download")
+    @GetMapping("/file/download/")
     public ResponseEntity<Resource> downloadFile(
-            @RequestParam(required = false) String fileName) {
+            @RequestParam String apiKey,
+            @RequestParam String bucketKey){
 
-//      TODO build auth service that's key based, assure btyeArray method is best opt here
+//      TODO build auth service that's key based, assure byteArray method is best opt here
 //      TODO expand for larger files, create more dynamic approach
         try{
-            File file = this.fileService.download();
-            Resource resource = new ByteArrayResource(file.content());
+            File file = this.fileService.download(bucketKey, apiKey);
+            Resource resource = new ByteArrayResource(file.getContent());
             String contentType = "application/octet-stream";
 
             return ResponseEntity.ok()
                     .contentType(MediaType.parseMediaType(contentType))
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + (file.fileName() + file.extension()) )
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + (file.getName()))
                     .body(resource);
 
         } catch (Exception e) {
