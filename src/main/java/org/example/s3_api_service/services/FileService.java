@@ -9,6 +9,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import software.amazon.awssdk.core.ResponseBytes;
 import software.amazon.awssdk.core.sync.ResponseTransformer;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 
 @Service
 public class FileService {
@@ -24,20 +25,27 @@ public class FileService {
         this.authenticator = authenticator;
     }
 
+
     public File download(String apiKey, String bucketKey){
-//        TODO need to find a good way of streaming the sdk bytes into something that can be sent to the client, unsure if i could use this or not
-        File file = null;
 
         if(this.authenticator.isKeyValid(apiKey)){
-            var data = s3Client.getObject(request ->
-                    request
+            byte[] fileBytes = s3Client.getObjectAsBytes(
+                    GetObjectRequest
+                            .builder()
                             .bucket(bucketName)
-                            .key(bucketKey),
-                    ResponseTransformer.toBytes());
+                            .key(bucketKey)
+                            .build())
+                    .asByteArray();
+
+            return new File(
+                    bucketKey,
+                    fileBytes);
+
 
         }
-
-        return file;
+        else{
+            return null;
+        }
     }
 
 //    @Nullable
