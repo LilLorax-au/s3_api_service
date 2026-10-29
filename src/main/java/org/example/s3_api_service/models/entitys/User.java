@@ -12,7 +12,7 @@ public class User {
     private String name;
     private String email;
     private String role;
-    private String api_key;
+    private String apiKey;
     private String prefix;
 
     public Integer getId() {
@@ -31,8 +31,8 @@ public class User {
         return role;
     }
 
-    public String getApi_key() {
-        return api_key;
+    public String getApiKey() {
+        return apiKey;
     }
 
     public String getPrefix() {
