@@ -1,6 +1,6 @@
 package org.example.s3_api_service.services;
 
-import org.example.s3_api_service.exceptions.BadKeyException;
+import org.example.s3_api_service.exceptions.FileNotFoundException;
 import org.example.s3_api_service.models.File;
 import org.example.s3_api_service.exceptions.AuthException;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,8 +11,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
-
-import javax.swing.*;
 
 @Service
 public class FileService {
@@ -29,7 +27,7 @@ public class FileService {
     }
 
 
-    public File download(String apiKey, String bucketKey) throws AuthException, BadKeyException{
+    public File download(String apiKey, String bucketKey) throws AuthException, FileNotFoundException {
         String prefix;
         byte[] fileBytes;
 
@@ -48,7 +46,7 @@ public class FileService {
                                     .build())
                     .asByteArray();
         } catch (NoSuchKeyException e) {
-            throw new BadKeyException("Bad Key: " + bucketKey);
+            throw new FileNotFoundException("Bad Key: " + bucketKey);
         }
 
         return new File(

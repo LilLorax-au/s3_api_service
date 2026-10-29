@@ -1,6 +1,7 @@
 package org.example.s3_api_service.controllers;
 
 import org.example.s3_api_service.exceptions.AuthException;
+import org.example.s3_api_service.exceptions.FileNotFoundException;
 import org.example.s3_api_service.services.FileService;
 import org.example.s3_api_service.models.File;
 import org.springframework.core.io.ByteArrayResource;
@@ -34,28 +35,32 @@ public class FileController {
     public ResponseEntity<Resource> downloadFile(
             @RequestParam String apiKey,
             @RequestParam String bucketKey
-    ){
-//      TODO expand for larger files, create more dynamic approach
+    ) throws AuthException, FileNotFoundException {
+
+        // TODO expand for larger files, create more dynamic approach
+
+        File file;
+        Resource resource;
+        String contentType = "application/octet-stream";
 
         try{
 //          Try Download based on keys
-            File file = this.fileService.download(bucketKey, apiKey);
+            file = this.fileService.download(bucketKey, apiKey);
         }catch(AuthException error){
-            Resource resource = error.getMessage();
-            ResponseEntity response = ResponseEntity
-                    .status(400)
-                    .body(error.getMessage()
-                    );
+//          Will be caught by ApiExceptionHandler and returned to user
+            throw new AuthException(error);
+        } catch (FileNotFoundException e) {
+//          Will be caught by ApiExceptionHandler and returned to user
+            throw new RuntimeException(e);
         }
 
-        Resource resource = new ByteArrayResource(file.getContent());
-        String contentType = "application/octet-stream";
+        resource = new ByteArrayResource(file.getContent());
 
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(contentType))
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + (file.getName()))
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=" + (file.getName()))
                 .body(resource);
-
     }
 
     @GetMapping("/test")
