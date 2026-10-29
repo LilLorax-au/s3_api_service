@@ -10,11 +10,12 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-//@RequestMapping("/file")
+@RequestMapping("/file")
 public class FileController {
 
     private final FileService fileService;
@@ -22,7 +23,6 @@ public class FileController {
     public FileController(FileService fileService){
         this.fileService = fileService;
     }
-
 
     /**
      * End point for downloading files
@@ -34,7 +34,8 @@ public class FileController {
     @GetMapping("/download")
     public ResponseEntity<Resource> downloadFile(
             @RequestParam String apiKey,
-            @RequestParam String bucketKey
+            @RequestParam String bucketKey,
+            @RequestParam boolean isShared
     ) throws AuthException, FileNotFoundException {
 
         // TODO expand for larger files, create more dynamic approach
@@ -45,7 +46,7 @@ public class FileController {
 
         try{
 //          Try Download based on keys
-            file = this.fileService.download(apiKey, bucketKey);
+            file = this.fileService.download(apiKey, bucketKey, isShared);
         }catch(AuthException error){
 //          Will be caught by ApiExceptionHandler and returned to user
             throw new AuthException(error);

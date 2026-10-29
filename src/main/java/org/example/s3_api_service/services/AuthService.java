@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class AuthService {
 
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
     public AuthService(UserRepository userRepository){
         this.userRepository = userRepository;
@@ -31,9 +31,12 @@ public class AuthService {
         }
     }
 
-    private boolean isKeyValid(String apiKey){
-        User user = this.userRepository.findByApiKey(apiKey);
-
-        return user != null;
+    public boolean isKeyValid(String apiKey) throws AuthException{
+        if(this.userRepository.findByApiKey(DigestUtils.sha256Hex(apiKey)) != null){
+            return true;
+        }
+        else{
+            throw new AuthException("Invalid API key");
+        }
     }
 }

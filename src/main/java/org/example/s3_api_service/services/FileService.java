@@ -3,10 +3,9 @@ package org.example.s3_api_service.services;
 import org.example.s3_api_service.exceptions.FileNotFoundException;
 import org.example.s3_api_service.models.File;
 import org.example.s3_api_service.exceptions.AuthException;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
-import java.util.concurrent.atomic.AtomicLong;
 
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
@@ -19,7 +18,6 @@ public class FileService {
 
     private final S3Client s3Client;
     private final AuthService authenticator;
-    private final AtomicLong fileCounter = new AtomicLong(0);
 
     public FileService(S3Client s3Client, AuthService authenticator){
         this.s3Client = s3Client;
@@ -27,16 +25,38 @@ public class FileService {
     }
 
 
-    public File download(String apiKey, String bucketKey) throws AuthException, FileNotFoundException {
+    public File download(String apiKey, String bucketKey, boolean isShared) throws AuthException, FileNotFoundException {
+        File newFile = null;
         String prefix;
-        byte[] fileBytes;
 
-        try {
-            prefix = this.authenticator.getPrefix(apiKey);
-        }catch (AuthException e){
-            throw new AuthException(e);
+        if (isShared) {
+            try {
+                if (this.authenticator.isKeyValid(apiKey)) {
+                    prefix = "share/";
+                    newFile = download(prefix, bucketKey);
+                }
+            } catch (AuthException e) {
+                throw new AuthException(e);
+            } catch (FileNotFoundException e) {
+                throw new FileNotFoundException(e);
+            }
         }
+        else {
+            try {
+                prefix = this.authenticator.getPrefix(apiKey);
+                newFile = download(prefix, bucketKey);
+            } catch (AuthException e) {
+                throw new AuthException(e);
+            } catch (FileNotFoundException e) {
+                throw new FileNotFoundException(e);
+            }
+        }
+        return newFile;
+    }
 
+
+    private File download(String prefix, String bucketKey) throws FileNotFoundException{
+        byte[] fileBytes;
         try {
             fileBytes = s3Client.getObjectAsBytes(
                             GetObjectRequest
@@ -46,52 +66,11 @@ public class FileService {
                                     .build())
                     .asByteArray();
         } catch (NoSuchKeyException e) {
-            throw new FileNotFoundException("Bad Key: " + bucketKey);
+            throw new FileNotFoundException("Bad Bucket Key: " + bucketKey);
         }
 
         return new File(
                 bucketKey,
                 fileBytes);
-        }
+    }
 }
-
-//    @Nullable
-//    private static File testFileBuilder(String ext) throws IOException{
-//        String file_name = "test_file_" + fileCounter;
-//
-//        java.io.File testFile = new java.io.File(file_name + ext);
-//
-//        if (!testFile.exists()) {
-//            try {
-//                testWriteFile(file_name + ext);
-//            }catch (IOException e){
-//                throw new IOException(e);
-//            }
-//        }
-//
-//        try {
-//            return new File(
-//                    file_name,
-//                    ext,
-//                    org.apache.commons.io.FileUtils.readFileToByteArray(testFile)
-//            );
-//        } catch (IOException e) {
-//            return null;
-//        }
-//
-//    }
-//
-//    private static void testWriteFile(String file_name) throws IOException{
-//        try (FileWriter newFile = new FileWriter(file_name)){
-//            newFile.write(s3Name);
-//            System.out.println("Name:" + s3Name);
-////            for (int i = 0; i < 1000; i++){
-////                newFile.write("0");
-////            }
-//        }catch (IOException e){
-//            throw new IOException(e);
-//        }
-//    }
-
-
-
