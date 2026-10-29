@@ -1,6 +1,7 @@
 package org.example.s3_api_service.services;
 
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.example.s3_api_service.exceptions.AuthException;
 import org.example.s3_api_service.models.entitys.User;
 import org.example.s3_api_service.repositories.UserRepository;
@@ -20,7 +21,7 @@ public class AuthService {
     }
 
     public String getPrefix(String apiKey) throws AuthException{
-        User user = this.userRepository.findByApiKey(apiKey);
+        User user = this.userRepository.findByApiKey(DigestUtils.sha256Hex(apiKey));
 
         if(user != null){
             return user.getPrefix();
