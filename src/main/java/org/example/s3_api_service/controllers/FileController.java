@@ -1,5 +1,6 @@
 package org.example.s3_api_service.controllers;
 
+import org.example.s3_api_service.exceptions.AuthException;
 import org.example.s3_api_service.services.FileService;
 import org.example.s3_api_service.models.File;
 import org.springframework.core.io.ByteArrayResource;
@@ -32,15 +33,20 @@ public class FileController {
     @GetMapping("/download")
     public ResponseEntity<Resource> downloadFile(
             @RequestParam String apiKey,
-            @RequestParam String bucketKey){
-
-//      TODO build auth service that's key based, assure byteArray method is best opt here
+            @RequestParam String bucketKey
+    ){
 //      TODO expand for larger files, create more dynamic approach
 
         try{
 //          Try Download based on keys
             File file = this.fileService.download(bucketKey, apiKey);
-        }catch ()
+        }catch(AuthException error){
+            Resource resource = error.getMessage();
+            ResponseEntity response = ResponseEntity
+                    .status(400)
+                    .body(error.getMessage()
+                    );
+        }
 
         Resource resource = new ByteArrayResource(file.getContent());
         String contentType = "application/octet-stream";
