@@ -1,6 +1,8 @@
 package org.example.s3_api_service.services;
 
+import org.example.s3_api_service.exceptions.BadKeyException;
 import org.example.s3_api_service.models.File;
+import org.example.s3_api_service.exceptions.AuthException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -8,6 +10,9 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
+
+import javax.swing.*;
 
 @Service
 public class FileService {
@@ -24,27 +29,33 @@ public class FileService {
     }
 
 
-    public File download(String apiKey, String bucketKey){
+    public File download(String apiKey, String bucketKey) throws AuthException, BadKeyException{
+        String prefix;
+        byte[] fileBytes;
 
-        if(this.authenticator.isKeyValid(apiKey)){
-            byte[] fileBytes = s3Client.getObjectAsBytes(
-                    GetObjectRequest
-                            .builder()
-                            .bucket(bucketName)
-                            .key(bucketKey)
-                            .build())
+        try {
+            prefix = this.authenticator.getPrefix(apiKey);
+        }catch (AuthException e){
+            throw new AuthException(e);
+        }
+
+        try {
+            fileBytes = s3Client.getObjectAsBytes(
+                            GetObjectRequest
+                                    .builder()
+                                    .bucket(bucketName)
+                                    .key(prefix + "/" + bucketKey)
+                                    .build())
                     .asByteArray();
-
-            return new File(
-                    bucketKey,
-                    fileBytes);
-
-
+        } catch (NoSuchKeyException e) {
+            throw new BadKeyException("Bad Key: " + bucketKey);
         }
-        else{
-            return null;
+
+        return new File(
+                bucketKey,
+                fileBytes);
         }
-    }
+}
 
 //    @Nullable
 //    private static File testFileBuilder(String ext) throws IOException{
@@ -85,4 +96,4 @@ public class FileService {
 //    }
 
 
-}
+

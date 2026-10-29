@@ -8,12 +8,11 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/file")
+//@RequestMapping("/file")
 public class FileController {
 
     private final FileService fileService;
@@ -30,25 +29,36 @@ public class FileController {
      * TODO param key, for secure api auth
      * @return A resource to download, will end up supporting any files, but limited to byte array size of about 2gb
      */
-    @GetMapping("/download/")
+    @GetMapping("/download")
     public ResponseEntity<Resource> downloadFile(
             @RequestParam String apiKey,
             @RequestParam String bucketKey){
 
 //      TODO build auth service that's key based, assure byteArray method is best opt here
 //      TODO expand for larger files, create more dynamic approach
+
         try{
+//          Try Download based on keys
             File file = this.fileService.download(bucketKey, apiKey);
-            Resource resource = new ByteArrayResource(file.getContent());
-            String contentType = "application/octet-stream";
+        }catch ()
 
-            return ResponseEntity.ok()
-                    .contentType(MediaType.parseMediaType(contentType))
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + (file.getName()))
-                    .body(resource);
+        Resource resource = new ByteArrayResource(file.getContent());
+        String contentType = "application/octet-stream";
 
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(contentType))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + (file.getName()))
+                .body(resource);
+
+    }
+
+    @GetMapping("/test")
+    public ResponseEntity<String> testMethod(
+            @RequestParam(defaultValue = "None") String one,
+            @RequestParam(defaultValue = "None") String two
+    ){
+        return ResponseEntity.ok()
+                .body("one: " + one + " two: " + two);
+
     }
 }

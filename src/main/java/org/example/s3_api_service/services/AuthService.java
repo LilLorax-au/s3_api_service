@@ -1,6 +1,7 @@
 package org.example.s3_api_service.services;
 
 
+import org.example.s3_api_service.exceptions.AuthException;
 import org.example.s3_api_service.models.entitys.User;
 import org.example.s3_api_service.repositories.UserRepository;
 import org.springframework.stereotype.Service;
@@ -18,8 +19,19 @@ public class AuthService {
         this.userRepository = userRepository;
     }
 
-    public boolean isKeyValid(String key){
-        User user = this.userRepository.findByApiKey(key);
+    public String getPrefix(String apiKey) throws AuthException{
+        User user = this.userRepository.findByApiKey(apiKey);
+
+        if(user != null){
+            return user.getPrefix();
+        }
+        else {
+            throw new AuthException("Invalid API key");
+        }
+    }
+
+    private boolean isKeyValid(String apiKey){
+        User user = this.userRepository.findByApiKey(apiKey);
 
         return user != null;
     }
