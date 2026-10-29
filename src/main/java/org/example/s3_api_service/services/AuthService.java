@@ -1,6 +1,7 @@
 package org.example.s3_api_service.services;
 
 
+import org.example.s3_api_service.repositories.UserRepository;
 import org.springframework.stereotype.Service;
 
 /**
@@ -10,7 +11,11 @@ import org.springframework.stereotype.Service;
 @Service
 public class AuthService {
 
+    private UserRepository userRepository;
 
+    public AuthService(UserRepository userRepository){
+        this.userRepository = userRepository;
+    }
 
     public static boolean isKeyValid(String key){
         return true;
