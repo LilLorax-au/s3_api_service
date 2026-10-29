@@ -45,7 +45,7 @@ public class FileController {
 
         try{
 //          Try Download based on keys
-            file = this.fileService.download(bucketKey, apiKey);
+            file = this.fileService.download(apiKey, bucketKey);
         }catch(AuthException error){
 //          Will be caught by ApiExceptionHandler and returned to user
             throw new AuthException(error);
