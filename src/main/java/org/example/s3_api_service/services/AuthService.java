@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class AuthService {
 
+
+
     public static boolean isKeyValid(String key){
         return true;
     }

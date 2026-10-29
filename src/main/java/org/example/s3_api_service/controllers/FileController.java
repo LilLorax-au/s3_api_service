@@ -8,10 +8,12 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@RequestMapping("/file")
 public class FileController {
 
     private final FileService fileService;
@@ -28,7 +30,7 @@ public class FileController {
      * TODO param key, for secure api auth
      * @return A resource to download, will end up supporting any files, but limited to byte array size of about 2gb
      */
-    @GetMapping("/file/download/")
+    @GetMapping("/download/")
     public ResponseEntity<Resource> downloadFile(
             @RequestParam String apiKey,
             @RequestParam String bucketKey){
