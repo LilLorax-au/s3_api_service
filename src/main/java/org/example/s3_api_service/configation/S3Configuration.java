@@ -27,7 +27,8 @@ public class S3Configuration {
         AwsCredentials credentials = AwsBasicCredentials.create(accessKey,secKey);
 
         return S3Client.builder()
-                .region(Region.of(zone))
+//                .region(Region.of(zone))
+                .region(Region.AP_SOUTHEAST_2)
                 .credentialsProvider(StaticCredentialsProvider.create(credentials))
                 .build();
 
