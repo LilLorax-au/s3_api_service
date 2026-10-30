@@ -8,6 +8,7 @@ import org.example.s3_api_service.exceptions.AuthException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
 
@@ -112,10 +113,6 @@ public class FileService {
                 .bucket(bucketName)
                 .prefix(prefix + "\\")
                 .build();
-
-//        ListObjectsV2Response listObjectsV2Response = s3Client.listObjectsV2(listObjectsV2Request);
-
-//        contents = cleanS3Objects(prefix, listObjectsV2Response.contents());
         contents = cleanS3Objects(prefix, listObjectsV2Request);
 
         return contents;
@@ -127,8 +124,48 @@ public class FileService {
                 .stream()
                 .flatMap(response -> response.contents().stream())
                 .filter(obj -> !obj.key().equals(prefix + "\\"))
-                .map(obj -> new CleanedS3Object(obj.key().substring(prefix.length()), obj.size(), obj.lastModified()))
+                .map(obj -> new CleanedS3Object(
+                        obj.key().substring(prefix.length())
+                        ,obj.size()
+                        ,obj.lastModified()
+                ))
                 .toList();
+    }
+
+    public void upload(String apiKey, boolean isShared, File file) throws AuthException{
+        String prefix;
+
+        if(isShared){
+            try {
+                if(authenticator.isKeyValid(apiKey)) {
+                    prefix = "share";
+                }
+            } catch (AuthException e) {
+                throw new AuthException(e);
+            }
+        }
+        else{
+            try{
+                prefix = authenticator.getPrefix(apiKey);
+            } catch (AuthException e) {
+                throw new AuthException(e);
+            }
+        }
+    }
+    private void upload(String prefix, File file){
+//        Needs override logic
+        PutObjectRequest request = PutObjectRequest.builder()
+                .bucket(bucketName)
+                .key(prefix + "\\" + file.getName())
+                .ifNoneMatch("*")
+                .build();
+        try{
+            s3Client.putObject(request, RequestBody.fromBytes(file.getContent()));
+        } catch (S3Exception e){
+            if (e.statusCode() == 412){
+//                return custom excpection
+            }
+        }
     }
 
 }
