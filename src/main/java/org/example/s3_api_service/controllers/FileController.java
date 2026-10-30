@@ -13,6 +13,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import software.amazon.awssdk.services.s3.model.S3Object;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/file")
@@ -20,15 +23,16 @@ public class FileController {
 
     private final FileService fileService;
 
-    public FileController(FileService fileService){
+    public FileController(FileService fileService) {
         this.fileService = fileService;
     }
 
     /**
      * End point for downloading files
+     *
      * @param bucketKey to spec what file to download(using s3 syntax)
-     * @param apiKey auth key
-     * TODO param key, for secure api auth
+     * @param apiKey    auth key
+     *                  TODO param key, for secure api auth
      * @return A resource to download, will end up supporting any files, but limited to byte array size of about 2gb
      */
     @GetMapping("/download")
@@ -44,15 +48,15 @@ public class FileController {
         Resource resource;
         String contentType = "application/octet-stream";
 
-        try{
+        try {
 //          Try Download based on keys
             file = this.fileService.download(apiKey, bucketKey, isShared);
-        }catch(AuthException error){
+        } catch (AuthException error) {
 //          Will be caught by ApiExceptionHandler and returned to user
             throw new AuthException(error);
         } catch (FileNotFoundException e) {
 //          Will be caught by ApiExceptionHandler and returned to user
-            throw new RuntimeException(e);
+            throw new FileNotFoundException(e);
         }
 
         resource = new ByteArrayResource(file.getContent());
@@ -64,13 +68,22 @@ public class FileController {
                 .body(resource);
     }
 
-    @GetMapping("/test")
-    public ResponseEntity<String> testMethod(
-            @RequestParam(defaultValue = "None") String one,
-            @RequestParam(defaultValue = "None") String two
-    ){
+    @GetMapping("/list")
+    public ResponseEntity<List<S3Object>> listFiles(
+            @RequestParam String apiKey,
+            @RequestParam boolean showShared,
+    ) throws AuthException {
+        List<S3Object> body;
+
+        try {
+            body = fileService.list(apiKey, showShared);
+        } catch (AuthException e) {
+            throw new AuthException(e);
+        }
+
         return ResponseEntity.ok()
-                .body("one: " + one + " two: " + two);
+                .body(body);
 
     }
 }
+

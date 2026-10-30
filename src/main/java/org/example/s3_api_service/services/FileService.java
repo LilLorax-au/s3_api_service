@@ -1,6 +1,7 @@
 package org.example.s3_api_service.services;
 
 import org.example.s3_api_service.exceptions.FileNotFoundException;
+import org.example.s3_api_service.models.CleanedS3Object;
 import org.example.s3_api_service.models.File;
 import org.example.s3_api_service.exceptions.AuthException;
 
@@ -8,8 +9,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.GetObjectRequest;
-import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
+import software.amazon.awssdk.services.s3.model.*;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
 
 @Service
 public class FileService {
@@ -31,8 +35,8 @@ public class FileService {
 
         if (isShared) {
             try {
-                if (this.authenticator.isKeyValid(apiKey)) {
-                    prefix = "share/";
+                if (authenticator.isKeyValid(apiKey)) {
+                    prefix = "share";
                     newFile = download(prefix, bucketKey);
                 }
             } catch (AuthException e) {
@@ -43,7 +47,7 @@ public class FileService {
         }
         else {
             try {
-                prefix = this.authenticator.getPrefix(apiKey);
+                prefix = authenticator.getPrefix(apiKey);
                 newFile = download(prefix, bucketKey);
             } catch (AuthException e) {
                 throw new AuthException(e);
@@ -62,7 +66,7 @@ public class FileService {
                             GetObjectRequest
                                     .builder()
                                     .bucket(bucketName)
-                                    .key(prefix + "/" + bucketKey)
+                                    .key(prefix + "\\" + bucketKey)
                                     .build())
                     .asByteArray();
         } catch (NoSuchKeyException e) {
@@ -73,4 +77,58 @@ public class FileService {
                 bucketKey,
                 fileBytes);
     }
+
+    public List<CleanedS3Object> list(String apiKey, boolean showShared) throws AuthException{
+        List<CleanedS3Object> contents = null;
+        String prefix;
+
+        if (showShared){
+            try{
+                if(authenticator.isKeyValid(apiKey)){
+                    prefix = "share";
+                    contents = list(prefix);
+                }
+            } catch (AuthException e) {
+                throw new AuthException(e);
+            }
+        }
+        else{
+            try{
+                prefix = authenticator.getPrefix(apiKey);
+                contents = list(prefix);
+            } catch (AuthException e){
+                throw new AuthException(e);
+            }
+        }
+        return contents;
+    }
+
+    private List<CleanedS3Object> list(String prefix) throws AuthException {
+//        TODO, in the case of network problems or aws downtime, need to write in error handling for it
+        List<CleanedS3Object> contents;
+
+        ListObjectsV2Request listObjectsV2Request = ListObjectsV2Request
+                .builder()
+                .bucket(bucketName)
+                .prefix(prefix + "\\")
+                .build();
+
+//        ListObjectsV2Response listObjectsV2Response = s3Client.listObjectsV2(listObjectsV2Request);
+
+//        contents = cleanS3Objects(prefix, listObjectsV2Response.contents());
+        contents = cleanS3Objects(prefix, listObjectsV2Request);
+
+        return contents;
+    }
+
+    private List<CleanedS3Object> cleanS3Objects(String prefix, ListObjectsV2Request rawContent){
+
+        return s3Client.listObjectsV2Paginator(rawContent)
+                .stream()
+                .flatMap(response -> response.contents().stream())
+                .filter(obj -> !obj.key().equals(prefix + "\\"))
+                .map(obj -> new CleanedS3Object(obj.key().substring(prefix.length()), obj.size(), obj.lastModified()))
+                .toList();
+    }
+
 }
