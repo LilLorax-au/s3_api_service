@@ -2,6 +2,7 @@ package org.example.s3_api_service.controllers;
 
 import org.example.s3_api_service.exceptions.AuthException;
 import org.example.s3_api_service.exceptions.FileNotFoundException;
+import org.example.s3_api_service.models.CleanedS3Object;
 import org.example.s3_api_service.services.FileService;
 import org.example.s3_api_service.models.File;
 import org.springframework.core.io.ByteArrayResource;
@@ -69,11 +70,11 @@ public class FileController {
     }
 
     @GetMapping("/list")
-    public ResponseEntity<List<S3Object>> listFiles(
+    public ResponseEntity<List<CleanedS3Object>> listFiles(
             @RequestParam String apiKey,
-            @RequestParam boolean showShared,
+            @RequestParam boolean showShared
     ) throws AuthException {
-        List<S3Object> body;
+        List<CleanedS3Object> body;
 
         try {
             body = fileService.list(apiKey, showShared);
