@@ -24,5 +24,12 @@ public class ApiExceptionHandler {
                 .body(Map.of("ERROR", error.getMessage()));
     }
 
+    @ExceptionHandler(FileOverwriteException.class)
+    public  ResponseEntity<Map<String, String>> handleOverwriteFailure(FileOverwriteException error){
+        return ResponseEntity
+                .status(HttpStatus.PRECONDITION_FAILED)
+                .body(Map.of("ERROR", error.getMessage()));
+    }
+
 
 }

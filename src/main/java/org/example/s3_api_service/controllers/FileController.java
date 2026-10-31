@@ -2,6 +2,7 @@ package org.example.s3_api_service.controllers;
 
 import org.example.s3_api_service.exceptions.AuthException;
 import org.example.s3_api_service.exceptions.FileNotFoundException;
+import org.example.s3_api_service.exceptions.FileOverwriteException;
 import org.example.s3_api_service.models.CleanedS3Object;
 import org.example.s3_api_service.services.FileService;
 import org.example.s3_api_service.models.File;
@@ -10,12 +11,11 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.services.s3.model.S3Object;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -38,7 +38,7 @@ public class FileController {
      */
     @GetMapping("/download")
     public ResponseEntity<Resource> downloadFile(
-            @RequestParam String apiKey,
+            @RequestHeader String apiKey,
             @RequestParam String bucketKey,
             @RequestParam boolean isShared
     ) throws AuthException, FileNotFoundException {
@@ -71,7 +71,7 @@ public class FileController {
 
     @GetMapping("/list")
     public ResponseEntity<List<CleanedS3Object>> listFiles(
-            @RequestParam String apiKey,
+            @RequestHeader String apiKey,
             @RequestParam boolean showShared
     ) throws AuthException {
         List<CleanedS3Object> body;
@@ -85,6 +85,27 @@ public class FileController {
         return ResponseEntity.ok()
                 .body(body);
 
+    }
+
+    @PostMapping
+    public ResponseEntity<String> uploadFile(
+            @RequestHeader String apiKey,
+            @RequestParam boolean isShared,
+            @RequestParam boolean overwrite,
+            @RequestBody MultipartFile file
+            ) throws FileOverwriteException, RuntimeException, AuthException{
+
+        try{
+            fileService.upload(apiKey, isShared, overwrite, new File(file));
+        } catch (FileOverwriteException e){
+            throw new FileOverwriteException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } catch (AuthException e) {
+            throw new AuthException(e);
+        }
+
+        return ResponseEntity.ok("Upload status: Okay");
     }
 }
 

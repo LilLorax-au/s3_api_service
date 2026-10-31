@@ -1,6 +1,7 @@
 package org.example.s3_api_service.services;
 
 import org.example.s3_api_service.exceptions.FileNotFoundException;
+import org.example.s3_api_service.exceptions.FileOverwriteException;
 import org.example.s3_api_service.models.CleanedS3Object;
 import org.example.s3_api_service.models.File;
 import org.example.s3_api_service.exceptions.AuthException;
@@ -132,7 +133,12 @@ public class FileService {
                 .toList();
     }
 
-    public void upload(String apiKey, boolean isShared, File file) throws AuthException{
+    public void upload(
+            String apiKey,
+            boolean isShared,
+            boolean overwrite,
+            File file
+    ) throws AuthException{
         String prefix;
 
         if(isShared){
@@ -152,18 +158,26 @@ public class FileService {
             }
         }
     }
-    private void upload(String prefix, File file){
-//        Needs override logic
-        PutObjectRequest request = PutObjectRequest.builder()
-                .bucket(bucketName)
-                .key(prefix + "\\" + file.getName())
-                .ifNoneMatch("*")
-                .build();
+    private void upload(String prefix, boolean overwrite, File file)throws FileOverwriteException{
+        PutObjectRequest request;
+
+        if(overwrite){
+            request = PutObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(prefix + "\\" + file.getName())
+                    .build();
+        }else{
+            request = PutObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(prefix + "\\" + file.getName())
+                    .ifNoneMatch("*")
+                    .build();
+        }
         try{
             s3Client.putObject(request, RequestBody.fromBytes(file.getContent()));
         } catch (S3Exception e){
-            if (e.statusCode() == 412){
-//                return custom excpection
+            if(e.statusCode() == 412){
+                throw new FileOverwriteException(e);
             }
         }
     }
